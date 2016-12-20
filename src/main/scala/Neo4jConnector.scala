@@ -22,7 +22,7 @@ object Neo4jConnector {
         entry._1 == "subject"
       })(0)._2.asInstanceOf[InternalNode].id
     }).collect
-    //subjectIds.collect().map(println)
+    subjectIds.map(println)
 
     subjectIds.map(subjectId => {
       val resultTaxon = Neo4jTupleRDD(sc, easyQuery, Seq("nodeid" -> subjectId.asInstanceOf[java.lang.Long])).collect
