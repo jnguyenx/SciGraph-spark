@@ -2,37 +2,20 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.graphx.Graph
-import org.apache.spark.graphx._
 import org.neo4j.spark._
-import org.neo4j.driver.internal.InternalNode
 import scala.collection.JavaConverters._
+import org.apache.spark.sql._
 
-object Neo4jConnector {
-
+object Neo4jConnector2 {
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Simple Neo4j connector")
     val sc = new SparkContext(conf)
 
-    val result = Neo4jTupleRDD(sc, query, Seq.empty)
-    println(result.count)
+    val neo = Neo4j(sc)
 
-    val subjectIds = result.map(r => {
-      r.filter(entry => {
-        entry._1 == "subject"
-      })(0)._2.asInstanceOf[InternalNode].id
-    }).collect()
-    //subjectIds.map(println)
-
-    val withTaxon = subjectIds.map(subjectId => {
-      val resultTaxon = Neo4jTupleRDD(sc, easyQuery, Seq("nodeid" -> subjectId.asInstanceOf[java.lang.Long])).collect
-      val taxon = resultTaxon.map(taxon => taxon(0)._2).mkString(",")
-      //println(subjectId + " - " + taxon)
-      subjectId + " - " + taxon
-    })
-
-    withTaxon.map(println)
-
+    val rdd = neo.cypher("MATCH (g:gene) RETURN id(g) as id ").loadNodeRdds
+    println(rdd.count)
+    
   }
 
   val query = """
@@ -50,16 +33,4 @@ object Neo4jConnector {
      'disease' AS object_category,
      'inferred' as qualifier
     """
-
-  val easyQuery = """
-    MATCH (n)-[*1..2]-(dummy)
-    WHERE id(n) = {nodeid}
-    RETURN DISTINCT dummy.iri
-    LIMIT 1
-    """
-
-  val taxonQuery = """
-    MATCH (n)-[:equivalentClass|sameAs*]-()-[:subClassOf|type*0..]-()<-[:`http://purl.obolibrary.org/obo/RO_0002525`|`http://purl.obolibrary.org/obo/RO_0002517`|`http://purl.obolibrary.org/obo/RO_0002519`]-()-[:`http://purl.obolibrary.org/obo/GENO_0000610`|`http://purl.obolibrary.org/obo/GENO_0000653`|`http://purl.obolibrary.org/obo/GENO_0000414`|`http://purl.obolibrary.org/obo/GENO_0000641`|`http://purl.obolibrary.org/obo/GENO_0000652`|`http://purl.obolibrary.org/obo/GENO_0000443`|`http://purl.obolibrary.org/obo/GENO_0000651`|`http://purl.obolibrary.org/obo/GENO_0000408`|`http://purl.obolibrary.org/obo/GENO_0000418`|`http://purl.obolibrary.org/obo/GENO_0000222`|`http://purl.obolibrary.org/obo/RO_0001000`]->()-[:`http://purl.obolibrary.org/obo/RO_0002162`]->(taxon)
-    WHERE id(n) = {nodeid}
-    RETURN DISTINCT taxon.iri;"""
 }

@@ -6,9 +6,10 @@ scalaVersion := "2.11.8"
 
 spName := "monarchinitiative/SciGraph-spark"
 
-sparkVersion := "1.6.2"
+sparkVersion := "2.0.2"
 
-sparkComponents ++= Seq("graphx")
+sparkComponents ++= Seq("graphx", "sql")
 
-spDependencies += "neo4j-contrib/neo4j-spark-connector:1.0.0-RC1"
+//spDependencies += "neo4j-contrib/neo4j-spark-connector:1.0.0-RC1"
 
+spDependencies += "neo4j-contrib/neo4j-spark-connector:2.0.0-M2"
